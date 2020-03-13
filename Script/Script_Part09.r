@@ -244,7 +244,7 @@ dim(welfare)
 #10대는 제거하고, 수입 평균을 구하시오.
 
 welfare %>%  filter(age>=20) %>% 
-  mutate(age10 = age %>% 10*10, 
+  mutate(age10 = age %/% 10*10, 
          age10 = ifelse(age10>60,60,age10)) %>% 
   group_by(age10) %>%
   summarise(menaInc = mean(income, na.rm=T))
@@ -317,11 +317,15 @@ ggplot(data = sex_income, aes(x = ageg, y = mean_income, fill = sex)) +
 
 ## Quiz: 나이 및 성별 월급 차이 분석하기 --------------- ##
 # 나이 및 성별 월급 평균표를 작성하여 그래프로 표현해보자.
+
+welfare %>% filter(!is.na(income)) %>% group_by(age,sex) %>% summarise(mean = mean(income))
+
 # - income의 비 결측치를 필터링
 # - age, sex로 그룹
 # - income에 대해 평균을 구하여 sex_age를 생성한다.
-# - sex_age로 그래프를 그린다.
+# - sex_age로 line plot을 그린다. 
 
+ggplot(age_sex_Inc, aes(age, ))
 
 
 #### 09-6 직업별 월급 차이 ####
@@ -647,3 +651,34 @@ ggplot(data = list_order_old, aes(x = region,  y = pct, fill = ageg)) +
 # - 각 직업코드의 첫 digit을 직업종으로 하자.
 # - 1 ~ 10까지의 직업종에 대해 지역별 비율을 구한다.
 # - 7대 지역을 x축으로 직업종의 비율을 y축으로 bar 챠트를 작성한다.
+
+
+jobg_list <- data.frame(
+  jobg = 1:10,
+  jobgs = c("관리자",
+            "전문가",
+            "사무원",
+            "서비스원",
+            "영업원",
+            "1차산업원",
+            "2차산업원",
+            "기능원",
+            "단순 종사원",
+            "직업군인")
+)
+
+# tally() == summarise(n=n())
+josg_reg <- welfare %>% filter(!is.na(job)) %>%
+  mutate(jobg = code_job %/% 100) %>%
+  left_join(jobg_list, by = 'jobg') %>%
+  group_by(region, jobgs) %>%
+  tally() %>%
+  mutate(pct = round(n/sum(n)*100, 2)) %>%
+  select(-n)
+
+josg_reg %>%
+  spread(jobgs, pct) %>% View()
+josg_reg %>% View()
+
+josg_reg %>% ggplot(aes(region, pct, fill=jobgs)) +
+  geom_col(position = "dodge")
